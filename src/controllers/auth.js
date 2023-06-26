@@ -6,10 +6,8 @@ const jwt = require("jsonwebtoken");
 exports.register = async (req, res) => {
 
   const schema = Joi.object({
-    fullName: Joi.string().min(5).required(),
-    email: Joi.string().email().min(6).required(),
+    username: Joi.string().min(6).required(),
     password: Joi.string().min(6).required(),
-    role: Joi.string().min(5).required(),
   });
 
   const { error } = schema.validate(req.body);
@@ -21,37 +19,35 @@ exports.register = async (req, res) => {
       },
     });
 
-    const emailExist = await user.findOne({
-      where: {
-        email : req.body.email,
-      },
-    });
+  const usernameExist = await user.findOne({
+    where: {
+      username: req.body.username,
+    },
+  });
 
-    if (emailExist) {
-      return res.send({
-        status: "Failed",
-        message: "Email Already Registered",
-      });
-    }
+  if (usernameExist) {
+    return res.send({
+      status: "Failed",
+      message: "username Already Registered",
+    });
+  }
 
   try {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
     const newUser = await user.create({
-      fullName: req.body.fullName,
-      email: req.body.email,
+      username: req.body.username,
       password: hashedPassword,
-      role: req.body.role,
     });
 
     const token = jwt.sign({ id: user.id }, process.env.TOKEN_KEY);
-    
+
     res.status(200).send({
       status: "success",
       data: {
-        user :{
-          email: newUser.email,
+        user: {
+          username: newUser.username,
           token
         }
       },
@@ -67,7 +63,7 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   const schema = Joi.object({
-    email: Joi.string().email().min(6).required(),
+    username: Joi.string().min(6).required(),
     password: Joi.string().min(6).required(),
   });
 
@@ -83,7 +79,7 @@ exports.login = async (req, res) => {
   try {
     const userExist = await user.findOne({
       where: {
-        email: req.body.email,
+        username: req.body.username,
       },
       attributes: {
         exclude: ["createdAt", "updatedAt"],
@@ -104,17 +100,10 @@ exports.login = async (req, res) => {
 
     res.status(200).send({
       status: "success",
-      data:  {
-        user : {
+      data: {
+        user: {
           id: userExist.id,
-          email: userExist.email,
-          fullName: userExist.fullName,
-          role: userExist.role,
-          status: userExist.status,
-          gender: userExist.gender,
-          phone: userExist.phone,
-          address: userExist.address,
-          image: process.env.FILE_PATH +userExist.image,
+          username: userExist.username,
           token,
         }
       },
@@ -152,13 +141,7 @@ exports.checkAuth = async (req, res) => {
       data: {
         user: {
           id: dataUser.id,
-          fullName: dataUser.fullName,
-          email: dataUser.email,
-          gender: dataUser.gender,
-          phone: dataUser.phone,
-          address: dataUser.address,
-          role: dataUser.role,
-          image: process.env.FILE_PATH +dataUser.image,
+          username: dataUser.username,
         },
       },
     });
