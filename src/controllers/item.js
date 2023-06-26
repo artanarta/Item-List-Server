@@ -79,8 +79,7 @@ exports.additem = async (req, res) => {
 
     const items = await item.create({
       ...data,
-      // image: req.files.image[0].filename
-      image: result.public_id
+      image: req.files.image[0].filename
     });
 
     let iditem = await item.findOne({
