@@ -1,4 +1,5 @@
 const { item } = require("../../models");
+const cloudinary = require('../utils/cloudinary');
 
 exports.getAllItem = async (req, res) => {
   try {
@@ -69,9 +70,17 @@ exports.getIditem = async (req, res) => {
 exports.additem = async (req, res) => {
   try {
     const { ...data } = req.body;
+
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'Item-List',
+      use_filename: true,
+      unique_filename: false,
+    });
+
     const items = await item.create({
       ...data,
-      image: req.files.image[0].filename
+      // image: req.files.image[0].filename
+      image: result.public_id
     });
 
     let iditem = await item.findOne({
